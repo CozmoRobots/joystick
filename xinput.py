@@ -17,8 +17,7 @@ pip install --upgrade http://pyglet.googlecode.com/archive/tip.zip
 import ctypes
 import sys
 import time
-from operator import itemgetter, attrgetter
-from itertools import count, starmap
+from operator import attrgetter
 from pyglet import event
 
 # structs according to
@@ -212,78 +211,7 @@ class XInputJoystick(event.EventDispatcher):
         if not state:
             raise RuntimeError(
                 "Joystick %d is not connected" % self.device_number)
-        if state.packet_number != self._last_state.packet_number:
-            # state has changed, handle the change
-            self.update_packet_count(state)
-            self.handle_changed_state(state)
-        self._last_state = state
-
-    def update_packet_count(self, state):
-        "Keep track of received and missed packets for performance tuning"
-        self.received_packets += 1
-        missed_packets = state.packet_number - \
-            self._last_state.packet_number - 1
-        if missed_packets:
-            self.dispatch_event('on_missed_packet', missed_packets)
-        self.missed_packets += missed_packets
-
-    def handle_changed_state(self, state):
-        "Dispatch various events as a result of the state changing"
-        self.dispatch_event('on_state_changed', state)
-        self.dispatch_axis_events(state)
-        self.dispatch_button_events(state)
-
-    def dispatch_axis_events(self, state):
-        # axis fields are everything but the buttons
-        axis_fields = dict(XINPUT_GAMEPAD._fields_)
-        axis_fields.pop('buttons')
-        for axis, type in list(axis_fields.items()):
-            old_val = getattr(self._last_state.gamepad, axis)
-            new_val = getattr(state.gamepad, axis)
-            data_size = ctypes.sizeof(type)
-            old_val = self.translate(old_val, data_size)
-            new_val = self.translate(new_val, data_size)
-
-            # an attempt to add deadzones and dampen noise
-            # done by feel rather than following http://msdn.microsoft.com/en-gb/library/windows/desktop/ee417001%28v=vs.85%29.aspx#dead_zone
-            # ags, 2014-07-01
-            if ((old_val != new_val and (new_val > 0.08000000000000000 or new_val < -0.08000000000000000) and abs(old_val - new_val) > 0.00000000500000000) or
-               (axis == 'right_trigger' or axis == 'left_trigger') and new_val == 0 and abs(old_val - new_val) > 0.00000000500000000):
-                self.dispatch_event('on_axis', axis, new_val)
-
-    def dispatch_button_events(self, state):
-        changed = state.gamepad.buttons ^ self._last_state.gamepad.buttons
-        changed = get_bit_values(changed, 16)
-        buttons_state = get_bit_values(state.gamepad.buttons, 16)
-        changed.reverse()
-        buttons_state.reverse()
-        button_numbers = count(1)
-        changed_buttons = list(
-            filter(itemgetter(0), list(zip(changed, button_numbers, buttons_state))))
-        tuple(starmap(self.dispatch_button_event, changed_buttons))
-
-    def dispatch_button_event(self, changed, number, pressed):
-        self.dispatch_event('on_button', number, pressed)
-
-    # stub methods for event handlers
-    def on_state_changed(self, state):
-        pass
-
-    def on_axis(self, axis, value):
-        pass
-
-    def on_button(self, button, pressed):
-        pass
-
-    def on_missed_packet(self, number):
-        pass
-
-list(map(XInputJoystick.register_event_type, [
-    'on_state_changed',
-    'on_axis',
-    'on_button',
-    'on_missed_packet',
-]))
+        print(state)
 
 """
 * Bitmasks for the joysticks buttons, determines what has
@@ -423,54 +351,6 @@ XUSER_INDEX_ANY                 = 0x000000FF
 CAPS_FFB_SUPPORTED              = 0x0001
 
 
-def determine_optimal_sample_rate(joystick=None):
-    """
-    Poll the joystick slowly (beginning at 1 sample per second)
-    and monitor the packet stream for missed packets, indicating
-    that the sample rate is too slow to avoid missing packets.
-    Missed packets will translate to a lost information about the
-    joystick state.
-    As missed packets are registered, increase the sample rate until
-    the target reliability is reached.
-    """
-    # in my experience, you want to probe at 200-2000Hz for optimal
-    #  performance
-    if joystick is None:
-        joystick = XInputJoystick.enumerate_devices()[0]
-
-    j = joystick
-
-    print("Move the joystick or generate button events characteristic of your app")
-    print("Hit Ctrl-C or press button 6 (<, Back) to quit.")
-
-    # here I use the joystick object to store some state data that
-    #  would otherwise not be in scope in the event handlers
-
-    # begin at 1Hz and work up until missed messages are eliminated
-    j.probe_frequency = 1  # Hz
-    j.quit = False
-    j.target_reliability = .99  # okay to lose 1 in 100 messages
-
-    @j.event
-    def on_button(button, pressed):
-        # flag the process to quit if the < button ('back') is pressed.
-        j.quit = (button == 6 and pressed)
-
-    @j.event
-    def on_missed_packet(number):
-        print('missed %(number)d packets' % vars())
-        total = j.received_packets + j.missed_packets
-        reliability = j.received_packets / float(total)
-        if reliability < j.target_reliability:
-            j.missed_packets = j.received_packets = 0
-            j.probe_frequency *= 1.5
-
-    while not j.quit:
-        j.dispatch_events()
-        time.sleep(1.0 / j.probe_frequency)
-    print("final probe frequency was %s Hz" % j.probe_frequency)
-
-
 def sample_first_joystick():
     """
     Grab 1st available gamepad, logging changes to the screen.
@@ -490,14 +370,6 @@ def sample_first_joystick():
     battery = j.get_battery_information()
     print(battery)
 
-    @j.event
-    def on_button(button, pressed):
-        print('button', button, pressed)
-
-    left_speed = 0
-    right_speed = 0
-
-    @j.event
     def on_axis(axis, value):
         left_speed = 0
         right_speed = 0
@@ -510,8 +382,10 @@ def sample_first_joystick():
         j.set_vibration(left_speed, right_speed)
 
     while True:
-        j.dispatch_events()
+        state = j.get_state()
+        print(state)
         time.sleep(.01)
+
 
 if __name__ == "__main__":
     sample_first_joystick()

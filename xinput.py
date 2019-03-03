@@ -60,11 +60,6 @@ def struct_dict(struct):
     """
     take a ctypes.Structure and return its field/value pairs
     as a dict.
-
-    >>> 'buttons' in struct_dict(XINPUT_GAMEPAD)
-    True
-    >>> struct_dict(XINPUT_GAMEPAD)['buttons'].__class__.__name__
-    'CField'
     """
     get_pair = lambda field_type: (
         field_type[0], getattr(struct, field_type[0]))
@@ -76,29 +71,26 @@ ERROR_SUCCESS = 0
 
 
 class XInputJoystick:
-
     """
     XInputJoystick
-
-    A stateful wrapper, using pyglet event model, that binds to one
-    XInput device and dispatches events when states change.
-
     Example:
     controller_one = XInputJoystick(0)
     """
-    max_devices = 4
+
+    max_devices = 4  # maximum number of connected devices
 
     def __init__(self, device_number):
         self.device_number = device_number
         self._last_state = self.get_state()
 
     def get_state(self):
-        "Get the state of the controller represented by this object"
-        state = XINPUT_STATE()
-        res = xinput.XInputGetState(self.device_number, ctypes.byref(state))
+        """Get the state of the controller represented by this object"""
+        self._last_state = XINPUT_STATE()
+        res = xinput.XInputGetState(self.device_number, ctypes.byref(self._last_state))
         if res == ERROR_SUCCESS:
-            return state
+            return self._last_state
         if res != ERROR_DEVICE_NOT_CONNECTED:
+            self._last_state = None
             raise RuntimeError(
                 "Unknown error %d attempting to get state of device %d" % (res, self.device_number))
 
@@ -113,14 +105,13 @@ class XInputJoystick:
         return [device for device in devices if device.is_connected()]
 
     def set_vibration(self, left_motor, right_motor):
-        "Control the speed of both motors seperately"
+        """Control the speed of both motors separately"""
         # Set up function argument types and return type
         XInputSetState = xinput.XInputSetState
         XInputSetState.argtypes = [ctypes.c_uint, ctypes.POINTER(XINPUT_VIBRATION)]
         XInputSetState.restype = ctypes.c_uint
 
-        vibration = XINPUT_VIBRATION(
-            int(left_motor * 65535), int(right_motor * 65535))
+        vibration = XINPUT_VIBRATION(int(left_motor * 65535), int(right_motor * 65535))
         XInputSetState(self.device_number, ctypes.byref(vibration))
 
     def get_battery_information(self):
@@ -144,9 +135,10 @@ class XInputJoystick:
         #define BATTERY_LEVEL_LOW               0x01
         #define BATTERY_LEVEL_MEDIUM            0x02
         #define BATTERY_LEVEL_FULL              0x03
-        batt_type = "Unknown" if battery.BatteryType == 0xFF else ["Disconnected", "Wired", "Alkaline","Nimh"][battery.BatteryType]
+        battery_type = "Unknown" if battery.BatteryType == 0xFF \
+            else ["Disconnected", "Wired", "Alkaline", "Nimh"][battery.BatteryType]
         level = ["Empty", "Low", "Medium", "Full"][battery.BatteryLevel]
-        return batt_type, level
+        return battery_type, level
 
 
 """
@@ -287,7 +279,7 @@ XUSER_INDEX_ANY                 = 0x000000FF
 CAPS_FFB_SUPPORTED              = 0x0001
 
 
-def sample_first_joystick():
+def example():
     """
     Grab 1st available gamepad, logging changes to the screen.
     L & R analogue triggers set the vibration motor speed.
@@ -306,17 +298,6 @@ def sample_first_joystick():
     battery = j.get_battery_information()
     print(battery)
 
-    def on_axis(axis, value):
-        left_speed = 0
-        right_speed = 0
-
-        print('axis', axis, value)
-        if axis == "left_trigger":
-            left_speed = value
-        elif axis == "right_trigger":
-            right_speed = value
-        j.set_vibration(left_speed, right_speed)
-
     while True:
         state = j.get_state()
         print(state)
@@ -324,5 +305,5 @@ def sample_first_joystick():
 
 
 if __name__ == "__main__":
-    sample_first_joystick()
-    # determine_optimal_sample_rate()
+    example()
+

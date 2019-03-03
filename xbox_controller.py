@@ -53,6 +53,45 @@ def normalize_stick(x, y):
 lift_height = None
 
 
+def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
+
+    lift_action = None
+    head_action = None
+
+    # directional pad buttons
+    state = struct_dict(state.gamepad)
+    (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
+    robot.drive_wheels(left_speed, right_speed)
+
+    # face buttons
+    if state['buttons'] == GAMEPAD_B:
+        lift_height += 0.2
+        lift_action = robot.set_lift_height(lift_height, in_parallel=True)
+    if state['buttons'] == GAMEPAD_A:
+        lift_height -= 0.2
+        lift_action = robot.set_lift_height(lift_height, in_parallel=True)
+
+    if state['buttons'] == GAMEPAD_Y:
+        head_angle += 10
+        head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
+    if state['buttons'] == GAMEPAD_X:
+        head_angle -= 10
+        head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
+    if lift_action:
+        lift_action.wait_for_completed()
+    if head_action:
+        head_action.wait_for_completed()
+
+    # left stick
+    left_x, left_y, left_magnitude, _   = normalize_stick(state['l_thumb_x'], state['l_thumb_y'])
+
+    # right stick
+    right_x, right_y, right_magnitude, _ = normalize_stick(state['r_thumb_x'], state['r_thumb_y'])
+
+    #print("left :{0}, {1}, {2}".format(state['buttons'],left_x, left_y, left_magnitude))
+    #print("right:{0}, {1}, {2}".format(right_x, right_y, right_magnitude))
+
+
 def cozmo_program(robot: cozmo.robot.Robot):
 
     joysticks = XInputJoystick.enumerate_devices()
@@ -70,49 +109,11 @@ def cozmo_program(robot: cozmo.robot.Robot):
 
     head_angle = robot.head_angle.degrees
 
-    def on_state_changed(state):
-        nonlocal lift_height
-        nonlocal head_angle
-        lift_action = None
-        head_action = None
 
-        # directional pad buttons
-        state = struct_dict(state.gamepad)
-        (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
-        robot.drive_wheels(left_speed, right_speed)
-
-        # face buttons
-        if state['buttons'] == GAMEPAD_B:
-            lift_height += 0.2
-            lift_action = robot.set_lift_height(lift_height, in_parallel=True)
-        if state['buttons'] == GAMEPAD_A:
-            lift_height -= 0.2
-            lift_action = robot.set_lift_height(lift_height, in_parallel=True)
-
-        if state['buttons'] == GAMEPAD_Y:
-            head_angle += 10
-            head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
-        if state['buttons'] == GAMEPAD_X:
-            head_angle -= 10
-            head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
-        if lift_action:
-            lift_action.wait_for_completed()
-        if head_action:
-            head_action.wait_for_completed()
-
-        # left stick
-        left_x, left_y, left_magnitude, _   = normalize_stick(state['l_thumb_x'], state['l_thumb_y'])
-
-        # right stick
-        right_x, right_y, right_magnitude, _ = normalize_stick(state['r_thumb_x'], state['r_thumb_y'])
-
-        #print("left :{0}, {1}, {2}".format(state['buttons'],left_x, left_y, left_magnitude))
-        #print("right:{0}, {1}, {2}".format(right_x, right_y, right_magnitude))
-
-    joystick.on_state_changed = on_state_changed
 
     while True:
-        joystick.dispatch_events()
+        state =  joystick.get_state()
+        on_state_changed(robot, state, lift_height, head_angle)
         time.sleep(.01)
 
 

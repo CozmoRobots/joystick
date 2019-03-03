@@ -18,7 +18,6 @@ import ctypes
 import sys
 import time
 from operator import attrgetter
-from pyglet import event
 
 # structs according to
 # http://msdn.microsoft.com/en-gb/library/windows/desktop/ee417001%28v=vs.85%29.aspx
@@ -72,45 +71,11 @@ def struct_dict(struct):
     return dict(list(map(get_pair, struct._fields_)))
 
 
-def get_bit_values(number, size=32):
-    """
-    Get bit values as a list for a given number
-
-    >>> get_bit_values(1) == [0]*31 + [1]
-    True
-
-    >>> get_bit_values(0xDEADBEEF)
-    [1L, 1L, 0L, 1L, 1L, 1L, 1L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 0L, 1L, 1L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 0L, 1L, 1L, 1L, 1L]
-
-    You may override the default word size of 32-bits to match your actual
-    application.
-    >>> get_bit_values(0x3, 2)
-    [1L, 1L]
-
-    >>> get_bit_values(0x3, 4)
-    [0L, 0L, 1L, 1L]
-    """
-    res = list(gen_bit_values(number))
-    res.reverse()
-    # 0-pad the most significant bit
-    res = [0] * (size - len(res)) + res
-    return res
-
-
-def gen_bit_values(number):
-    """
-    Return a zero or one for each bit of a numeric value up to the most
-    significant 1 bit, beginning with the least significant bit.
-    """
-    number = int(number)
-    while number:
-        yield number & 0x1
-        number >>= 1
-
 ERROR_DEVICE_NOT_CONNECTED = 1167
 ERROR_SUCCESS = 0
 
-class XInputJoystick(event.EventDispatcher):
+
+class XInputJoystick:
 
     """
     XInputJoystick
@@ -123,30 +88,9 @@ class XInputJoystick(event.EventDispatcher):
     """
     max_devices = 4
 
-    def __init__(self, device_number, normalize_axes=True):
-        values = vars()
-        del values['self']
-        self.__dict__.update(values)
-
-        super(XInputJoystick, self).__init__()
-
+    def __init__(self, device_number):
+        self.device_number = device_number
         self._last_state = self.get_state()
-        self.received_packets = 0
-        self.missed_packets = 0
-
-        # Set the method that will be called to normalize
-        #  the values for analog axis.
-        choices = [self.translate_identity, self.translate_using_data_size]
-        self.translate = choices[normalize_axes]
-
-    def translate_using_data_size(self, value, data_size):
-        # normalizes analog data to [0,1] for unsigned data
-        #  and [-0.5,0.5] for signed data
-        data_bits = 8 * data_size
-        return float(value) / (2 ** data_bits - 1)
-
-    def translate_identity(self, value, data_size=None):
-        return value
 
     def get_state(self):
         "Get the state of the controller represented by this object"
@@ -157,17 +101,16 @@ class XInputJoystick(event.EventDispatcher):
         if res != ERROR_DEVICE_NOT_CONNECTED:
             raise RuntimeError(
                 "Unknown error %d attempting to get state of device %d" % (res, self.device_number))
-        # else return None (device is not connected)
 
     def is_connected(self):
         return self._last_state is not None
 
     @staticmethod
     def enumerate_devices():
-        "Returns the devices that are connected"
+        """Returns the devices that are connected"""
         devices = list(
             map(XInputJoystick, list(range(XInputJoystick.max_devices))))
-        return [d for d in devices if d.is_connected()]
+        return [device for device in devices if device.is_connected()]
 
     def set_vibration(self, left_motor, right_motor):
         "Control the speed of both motors seperately"
@@ -181,7 +124,7 @@ class XInputJoystick(event.EventDispatcher):
         XInputSetState(self.device_number, ctypes.byref(vibration))
 
     def get_battery_information(self):
-        "Get battery type & charge level"
+        """Get battery type & charge level"""
         BATTERY_DEVTYPE_GAMEPAD = 0x00
         BATTERY_DEVTYPE_HEADSET = 0x01
         # Set up function argument types and return type
@@ -205,13 +148,6 @@ class XInputJoystick(event.EventDispatcher):
         level = ["Empty", "Low", "Medium", "Full"][battery.BatteryLevel]
         return batt_type, level
 
-    def dispatch_events(self):
-        "The main event loop for a joystick"
-        state = self.get_state()
-        if not state:
-            raise RuntimeError(
-                "Joystick %d is not connected" % self.device_number)
-        print(state)
 
 """
 * Bitmasks for the joysticks buttons, determines what has

@@ -85,9 +85,10 @@ class XInputJoystick:
 
     def get_state(self):
         """Get the state of the controller represented by this object"""
-        self._last_state = XINPUT_STATE()
-        res = xinput.XInputGetState(self.device_number, ctypes.byref(self._last_state))
+        state = XINPUT_STATE()
+        res = xinput.XInputGetState(self.device_number, ctypes.byref(state))
         if res == ERROR_SUCCESS:
+            self._last_state = struct_dict(state.gamepad)
             return self._last_state
         if res != ERROR_DEVICE_NOT_CONNECTED:
             self._last_state = None

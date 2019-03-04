@@ -95,7 +95,7 @@ def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
 
     if left_speed == 0.0 and right_speed == 0.0:
         if left_magnitude != 0.0:
-            print ("x/y = {0}".format(left_x / left_y))
+            print("x/y = {0}".format(left_x / left_y))
             robot.drive_wheels(left_x * 100, left_y * 100)
             is_left_thumb_pressed = True
         else:

@@ -85,7 +85,7 @@ def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
     left_x, left_y, left_magnitude = normalize_stick(state['l_thumb_x'], state['l_thumb_y'])
 
     # right stick
-    #right_x, right_y, right_magnitude, _ = normalize_stick(state['r_thumb_x'], state['r_thumb_y'])
+    #right_x, right_y, right_magnitude = normalize_stick(state['r_thumb_x'], state['r_thumb_y'])
 
     print("left :{0}, {1}, {2}".format(left_x, left_y, left_magnitude))
     # print("right:{0}, {1}, {2}".format(right_x, right_y, right_magnitude))
@@ -97,9 +97,32 @@ def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
         (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
         if left_speed == 0.0 and right_speed == 0.0:
             if left_magnitude != 0.0:
-                print("x/y = {0}".format(left_x / left_y))
-                robot.drive_wheels(left_x * 100, left_y * 100)
-                is_left_thumb_pressed = True
+                # up
+                if left_y >= 0.75 and abs(left_x) < 0.25:
+                    robot.drive_wheels(100, 100)
+                # down
+                elif left_y <= -0.75 and abs(left_x) < 0.25:
+                    robot.drive_wheels(-100, -100)
+                # left
+                elif abs(left_y) < 0.25 and left_x <= -0.75:
+                    robot.drive_wheels(0, 100)
+                # right
+                elif abs(left_y) < 0.25 and left_x >= 0.75:
+                    robot.drive_wheels(100, 0)
+                # up + left
+                elif left_y >= 0.50 and left_x <= -0.50:
+                    robot.drive_wheels(50, 100)
+                # up + right
+                elif left_y >= 0.50 and left_x >= 0.50:
+                    robot.drive_wheels(100, 50)
+                # down + left
+                elif left_y <= -0.50 and left_x <= -0.50:
+                    robot.drive_wheels(-50, -100)
+                # down + right
+                elif left_y <= -0.50 and left_x >= 0.50:
+                    robot.drive_wheels(-100, -50)
+                else:
+                    pass
             else:
                 robot.drive_wheels(0, 0)
                 is_left_thumb_pressed = False

@@ -35,7 +35,7 @@ def normalize_stick(x, y):
     :return: a tuple containing (normalized x, normalized_y, magnitude, normalized_magnitude)
     """
     # determine how far the controller is pushed
-    # print("x = {0}, y = {1}".format(x, y))
+    print("x = {0}, y = {1}".format(x, y))
     magnitude = sqrt(x * x + y * y)
     # determine the direction the controller is pushed
     normalized_x, normalized_y = x / magnitude, y / magnitude
@@ -44,7 +44,7 @@ def normalize_stick(x, y):
         magnitude = min([magnitude, GAMEPAD_THUMB_MAX])
         magnitude -= GAMEPAD_LEFT_THUMB_DEADZONE
     else:
-        magnitude = 0.0
+        normalized_x, normalized_y, magnitude = 0.0, 0.0, 0.0
 
     return normalized_x, normalized_y, magnitude
 
@@ -91,18 +91,20 @@ def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
     # print("right:{0}, {1}, {2}".format(right_x, right_y, right_magnitude))
     # directional pad buttons
 
-    (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
-
-    if left_speed == 0.0 and right_speed == 0.0:
-        if left_magnitude != 0.0:
-            print("x/y = {0}".format(left_x / left_y))
-            robot.drive_wheels(left_x * 100, left_y * 100)
-            is_left_thumb_pressed = True
-        else:
-            robot.drive_wheels(0, 0)
-            is_left_thumb_pressed = False
+    if state['left_trigger'] > 0 or state['right_trigger'] > 0:
+        robot.drive_wheels(state['left_trigger'], state['right_trigger'])
     else:
-        robot.drive_wheels(left_speed, right_speed)
+        (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
+        if left_speed == 0.0 and right_speed == 0.0:
+            if left_magnitude != 0.0:
+                print("x/y = {0}".format(left_x / left_y))
+                robot.drive_wheels(left_x * 100, left_y * 100)
+                is_left_thumb_pressed = True
+            else:
+                robot.drive_wheels(0, 0)
+                is_left_thumb_pressed = False
+        else:
+            robot.drive_wheels(left_speed, right_speed)
 
 
 
@@ -125,7 +127,7 @@ def cozmo_program(robot: cozmo.robot.Robot):
 
     while True:
         state = joystick.get_state()
-        # print(state)
+        print(state)
         on_state_changed(robot, state, lift_height, head_angle)
         time.sleep(.01)
 

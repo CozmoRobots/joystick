@@ -18,14 +18,6 @@ directional_pad_speeds = {
     GAMEPAD_DPAD_DOWN | GAMEPAD_DPAD_RIGHT: (-100, -50),
 }
 
-# face_buttons = {
-#     # A, B , X, Y
-#     GAMEPAD_A: lambda robot: robot.
-#     GAMEPAD_B: (-100, -100),
-#     GAMEPAD_X: (0, 100),
-#     GAMEPAD_Y: (100, 0)
-# }
-
 
 def normalize_stick(x, y):
     """
@@ -56,7 +48,7 @@ is_left_thumb_pressed = False
 count = 0
 
 
-def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
+def check_controller_state(robot: cozmo.robot.Robot, state, lift_height, head_angle):
     global is_left_thumb_pressed, count
 
     lift_action = None
@@ -130,7 +122,6 @@ def on_state_changed(robot: cozmo.robot.Robot, state, lift_height, head_angle):
             robot.drive_wheels(left_speed, right_speed)
 
 
-
 def cozmo_program(robot: cozmo.robot.Robot):
 
     joysticks = XInputJoystick.enumerate_devices()
@@ -151,7 +142,7 @@ def cozmo_program(robot: cozmo.robot.Robot):
     while True:
         state = joystick.get_state()
         print(state)
-        on_state_changed(robot, state, lift_height, head_angle)
+        check_controller_state(robot, state, lift_height, head_angle)
         time.sleep(.01)
 
 

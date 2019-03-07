@@ -1,4 +1,7 @@
-2 Ideas:
+Thursday tasks:
+---------------
 
-- Compare between xbox controller and mobile app
+- Explain xinput library  and the code (Mudathir)
 - Ask students to implement some tasks for buttons (like boost)
+- Arrange for a race between robots (some controlled by xbox controller, and others controlled by the mobile app)
+

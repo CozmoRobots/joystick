@@ -9,8 +9,8 @@ directional_pad_speeds = {
     # up, down, left, right
     GAMEPAD_DPAD_UP: (100, 100),
     GAMEPAD_DPAD_DOWN: (-100, -100),
-    GAMEPAD_DPAD_LEFT: (0, 100),
-    GAMEPAD_DPAD_RIGHT: (100, 0),
+    GAMEPAD_DPAD_LEFT: (-100, 100),
+    GAMEPAD_DPAD_RIGHT: (100, -100),
     # diagonals
     GAMEPAD_DPAD_UP | GAMEPAD_DPAD_LEFT: (50, 100),
     GAMEPAD_DPAD_UP | GAMEPAD_DPAD_RIGHT: (100, 50),
@@ -97,10 +97,10 @@ def check_controller_state(robot: cozmo.robot.Robot, state, lift_height, head_an
                     robot.drive_wheels(-100, -100)
                 # left
                 elif abs(left_y) < 0.25 and left_x <= -0.75:
-                    robot.drive_wheels(0, 100)
+                    robot.drive_wheels(-100, 100)
                 # right
                 elif abs(left_y) < 0.25 and left_x >= 0.75:
-                    robot.drive_wheels(100, 0)
+                    robot.drive_wheels(100, -100)
                 # up + left
                 elif left_y >= 0.50 and left_x <= -0.50:
                     robot.drive_wheels(50, 100)

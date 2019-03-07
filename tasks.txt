@@ -1,0 +1,4 @@
+2 Ideas:
+
+- Compare between xbox controller and mobile app
+- Ask students to implement some tasks for buttons (like boost)

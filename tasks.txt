@@ -1,7 +1,15 @@
 Thursday tasks:
 ---------------
 
-- Explain xinput library  and the code (Mudathir)
-- Ask students to implement some tasks for buttons (like boost)
-- Arrange for a race between robots (some controlled by xbox controller, and others controlled by the mobile app)
+- Task 1:
 
+    Implement a boost feature for the movement speed when pressing the left bumper or the right bumper
+    that lasts for 10 seconds.
+
+- Task 2:
+    The current implementation for the left thumb and the directional pad controls the left and right treads
+    in a way that turns the robot to the left when left is pressed and to the right when the right is pressed.
+
+    Your task is to implement the right thumb such that the robot move left when left is pressed
+    (instead of turning left) and move right when the right is pressed (instead of turning right).
+    Also implement diagonal movement (e.g move up + left when the right thumb in position 'up + right'

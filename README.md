@@ -15,5 +15,5 @@ To run this project:
 **Note: The driver used for this project is only compatible with Windows and therefore this interface will only work for Windows devices connected to an Xbox One controller.**
 
 ## Dependencies
-* [Xbox Controller Module](https://github.com/r4dian/Xbox-360-Controller-for-Python)
+* [Xbox Controller Module](https://github.com/r4dian/Xbox-360-Controller-for-Python) - Edited version in this repository to support additional inputs from the Xbox One controller
 * [Cozmo SDK](http://cozmosdk.anki.com/docs/)

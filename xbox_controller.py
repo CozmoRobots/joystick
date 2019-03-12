@@ -53,9 +53,9 @@ def check_controller_state(robot: cozmo.robot.Robot, state):
     if state['buttons'] == GAMEPAD_A:
         robot.set_lift_height(0.0).wait_for_completed()
     if state['buttons'] == GAMEPAD_Y:
-        robot.set_head_angle(degrees(44.5)).wait_for_completed()
+        robot.move_head(3.0)
     if state['buttons'] == GAMEPAD_X:
-        robot.set_head_angle(degrees(0)).wait_for_completed()
+        robot.move_head(-3.0)
 
     # left stick
     left_x, left_y, left_magnitude = normalize_stick(state['l_thumb_x'], state['l_thumb_y'])

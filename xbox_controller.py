@@ -41,44 +41,24 @@ def normalize_stick(x, y):
     return normalized_x, normalized_y, magnitude
 
 
-lift_height = None
-
 is_left_thumb_pressed = False
 
-count = 0
 
-
-def check_controller_state(robot: cozmo.robot.Robot, state, lift_height, head_angle):
-    global is_left_thumb_pressed, count
-
-    lift_action = None
-    head_action = None
+def check_controller_state(robot: cozmo.robot.Robot, state):
+    global is_left_thumb_pressed
 
     # face buttons
     if state['buttons'] == GAMEPAD_B:
-        lift_height += 0.2
-        lift_action = robot.set_lift_height(lift_height, in_parallel=True)
+        robot.set_lift_height(1.0).wait_for_completed()
     if state['buttons'] == GAMEPAD_A:
-        lift_height -= 0.2
-        lift_action = robot.set_lift_height(lift_height, in_parallel=True)
-
-    if state['buttons'] == GAMEPAD_Y:
-        head_angle += 10
-        head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
+        robot.set_lift_height(0.0).wait_for_completed()
     if state['buttons'] == GAMEPAD_X:
-        head_angle -= 10
-        head_action = robot.set_head_angle(degrees(head_angle), in_parallel=True)
-    if lift_action:
-        lift_action.wait_for_completed()
-    if head_action:
-        head_action.wait_for_completed()
+        robot.set_head_angle(degrees(MAX_HEAD_ANGLE.degrees)).wait_for_completed()
+    if state['buttons'] == GAMEPAD_Y:
+        robot.set_head_angle(degrees(0)).wait_for_completed()
 
     # left stick
     left_x, left_y, left_magnitude = normalize_stick(state['l_thumb_x'], state['l_thumb_y'])
-
-    # right stick
-    #right_x, right_y, right_magnitude = normalize_stick(state['r_thumb_x'], state['r_thumb_y'])
-
     print("left :{0}, {1}, {2}".format(left_x, left_y, left_magnitude))
     # print("right:{0}, {1}, {2}".format(right_x, right_y, right_magnitude))
     # directional pad buttons
@@ -142,7 +122,7 @@ def cozmo_program(robot: cozmo.robot.Robot):
     while True:
         state = joystick.get_state()
         print(state)
-        check_controller_state(robot, state, lift_height, head_angle)
+        check_controller_state(robot, state)
         time.sleep(.01)
 
 

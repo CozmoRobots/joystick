@@ -1,8 +1,6 @@
 from xinput import *
 import cozmo
 from math import *
-from cozmo.robot import *
-
 
 directional_pad_speeds = {
     # up, down, left, right

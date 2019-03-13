@@ -28,7 +28,7 @@ def normalize_stick(x, y):
     """
     # determine how far the controller is pushed
     print("x = {0}, y = {1}".format(x, y))
-    magnitude = sqrt(x * x + y * y)
+    magnitude = sqrt(x * x + y * y) + 0.01  # 0.01 to avoid division by zero when x = y = 0
     # determine the direction the controller is pushed
     normalized_x, normalized_y = x / magnitude, y / magnitude
     # check if the controller is outside a circular dead zone

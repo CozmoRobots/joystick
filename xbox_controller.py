@@ -38,12 +38,7 @@ def normalize_stick(x, y):
     return normalized_x, normalized_y, magnitude
 
 
-is_left_thumb_pressed = False
-
-
 def check_controller_state(robot: cozmo.robot.Robot, state):
-    global is_left_thumb_pressed
-
     # face buttons
     # lift
     if state['buttons'] == GAMEPAD_B:
@@ -100,7 +95,6 @@ def check_controller_state(robot: cozmo.robot.Robot, state):
                     pass
             else:
                 robot.drive_wheels(0, 0)
-                is_left_thumb_pressed = False
         else:
             robot.drive_wheels(left_speed, right_speed)
 

@@ -2,7 +2,7 @@ Thursday tasks:
 ---------------
 
 - Task 1:
-    Implement a boost feature for movement speed. When the right bumper is pressed, the speed increases, and it decreases when the left bumper is pressed.
+    Implement a boost feature for movement speed. while the right bumper is pressed, the speed increases, and it decreases while the left bumper is pressed. Otherwise the default would be the speed value.
 
 - Task 2:
     The current implementation for the left thumb and the directional pad controls the left and right treads

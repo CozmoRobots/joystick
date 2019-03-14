@@ -69,7 +69,7 @@ def check_controller_state(robot: cozmo.robot.Robot, state):
     if state['left_trigger'] > 0 or state['right_trigger'] > 0:
         robot.drive_wheels(state['left_trigger'], state['right_trigger'])
     else:
-        (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'], (0, 0))
+        (left_speed, right_speed) = directional_pad_speeds.get(state['buttons'] & 0xFF, (0, 0))
         if left_speed == 0.0 and right_speed == 0.0:
             if left_magnitude != 0.0:
                 # up
